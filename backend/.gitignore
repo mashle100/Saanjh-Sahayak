@@ -8,6 +8,11 @@
 # testing
 /coverage
 
+# Ignore backend changes
+/package-lock.json
+/package.json
+
+
 # production
 /build
 
