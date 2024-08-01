@@ -5,13 +5,17 @@ import { Link, NavLink } from 'react-router-dom';
 const Header = ({ isAuthenticated, setIsAuthenticated }) => {
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('authtoken');
+localStorage.removeItem('username');
+localStorage.removeItem('role');
     setIsAuthenticated(false);
+
     window.location.href = '/login';
   };
 
   return (
     <header className="header">
-      <h1>Your App Name</h1>
+      <h1>Saanjh Sahayak</h1>
       <nav>
         <ul>
         <li>
@@ -23,9 +27,28 @@ const Header = ({ isAuthenticated, setIsAuthenticated }) => {
             <>
               
               <li>
-                <NavLink to="/health-records" activeClassName="active">
-                  Health Records
+                <NavLink to="/PatientForm" activeClassName="active">
+                PatientForm
                 </NavLink>
+                
+              </li>
+              <li>
+              <NavLink to="/chatbot" activeClassName="active">
+                  Chatbot
+                </NavLink>
+                
+              </li>
+              <li>
+              <NavLink to="/about" activeClassName="active">
+                  About
+                </NavLink>
+                
+              </li>
+              <li>
+              <NavLink to="/faq" activeClassName="active">
+                  FAQ
+                </NavLink>
+                
               </li>
               <li>
                 <button onClick={handleLogout}>Logout</button>
