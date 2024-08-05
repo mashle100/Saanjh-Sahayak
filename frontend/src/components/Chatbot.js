@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "./chatbot.css"; // Import the CSS file
 
 const Chatbot = () => {
   const [inputText, setInputText] = useState("");
@@ -18,13 +17,13 @@ const Chatbot = () => {
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInputText("");
-    setIsLoading(true); // Start loading animation and disable button
+    setIsLoading(true);
 
     try {
-      const res=await axios.post("http://localhost:5000/api/chat",{
-        userMessage:inputText,
-      })
-      const chatId=res.data._id;
+      const res = await axios.post("http://localhost:5000/api/chat", {
+        userMessage: inputText,
+      });
+      const chatId = res.data._id;
       const requestBody = {
         prompt: inputText,
         chatHistory: updatedMessages.map((msg) => ({
@@ -32,42 +31,55 @@ const Chatbot = () => {
           content: msg.text,
         })),
       };
-      console.log(requestBody);
       const botRes = await axios.post("http://localhost:5000/ask", requestBody);
       const botMessageText = botRes.data.answer;
-      await axios.put(`http://localhost:5000/api/chat/${chatId}`,{
-        botMessage:botMessageText,
-      })
-      const botMessage={text:botMessageText,sender:"bot"};
+      await axios.put(`http://localhost:5000/api/chat/${chatId}`, {
+        botMessage: botMessageText,
+      });
+      const botMessage = { text: botMessageText, sender: "bot" };
       setMessages((prevMessages) => [...prevMessages, botMessage]);
     } catch (error) {
-      console.error("Error fetching data:", error); // Log the detailed error
-      const errorMessage = { text: "Error fetching response.", sender: "bot" };
-      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      console.error("Error:", error);
     } finally {
-      setIsLoading(false); // Stop loading animation and enable button
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-messages">
-        {messages.map((message, index) => (
-          <div key={index} className={`message ${message.sender}`}>
-            <p>{message.text}</p>
+    <div className="max-w-xl mx-auto p-4 bg-white rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold mb-4">Chatbot</h2>
+      <div className="border border-gray-300 rounded-lg p-4 h-64 overflow-y-auto">
+        {messages.map((msg, index) => (
+          <div
+            key={index}
+            className={`mb-2 ${
+              msg.sender === "user" ? "text-right" : "text-left"
+            }`}
+          >
+            <p
+              className={`inline-block px-4 py-2 rounded-lg ${
+                msg.sender === "user" ? "bg-blue-500 text-white" : "bg-gray-200"
+              }`}
+            >
+              {msg.text}
+            </p>
           </div>
         ))}
-        {isLoading && <div className="typing-indicator">AI is typing...</div>}
+        {isLoading && <p className="text-gray-500">Loading...</p>}
       </div>
-      <div className="chat-input">
-        <textarea
-          className="text-box"
-          placeholder="Enter your query..."
+      <div className="mt-4 flex">
+        <input
+          type="text"
           value={inputText}
           onChange={handleInputChange}
-        ></textarea>
-        <button type="button" onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? "Loading..." : "Submit"}
+          placeholder="Type your message..."
+          className="flex-grow p-2 border border-gray-300 rounded-l-lg"
+        />
+        <button
+          onClick={handleSubmit}
+          className="bg-blue-500 text-white px-4 rounded-r-lg hover:bg-blue-600 transition"
+        >
+          Send
         </button>
       </div>
     </div>

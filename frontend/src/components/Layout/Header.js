@@ -1,75 +1,67 @@
-
-import React from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import React from "react";
+import { Link, NavLink } from "react-router-dom";
+import { FaSignInAlt, FaSignOutAlt, FaBars } from "react-icons/fa";
 
 const Header = ({ isAuthenticated, setIsAuthenticated }) => {
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('authtoken');
-localStorage.removeItem('username');
-localStorage.removeItem('role');
+    localStorage.removeItem("token");
+    localStorage.removeItem("authtoken");
+    localStorage.removeItem("username");
+    localStorage.removeItem("role");
     setIsAuthenticated(false);
-
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
 
   return (
-    <header className="header">
-      <h1>Saanjh Sahayak</h1>
-      <nav>
-        <ul>
-        <li>
-            <NavLink to="/dashboard" activeClassName="active">
-              Dashboard
-            </NavLink>
-        </li>
+    <header className="bg-blue-800 text-white py-4 shadow-md">
+      <div className="container mx-auto flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Saanjh Sahayak</h1>
+        <nav className="hidden md:flex space-x-6">
+          <NavLink to="/dashboard" className="hover:text-blue-300">
+            Dashboard
+          </NavLink>
           {isAuthenticated ? (
             <>
-              
-              <li>
-                <NavLink to="/PatientForm" activeClassName="active">
-                PatientForm
-                </NavLink>
-                
-              </li>
-              <li>
-              <NavLink to="/chatbot" activeClassName="active">
-                  Chatbot
-                </NavLink>
-                
-              </li>
-              <li>
-              <NavLink to="/about" activeClassName="active">
-                  About
-                </NavLink>
-                
-              </li>
-              <li>
-              <NavLink to="/faq" activeClassName="active">
-                  FAQ
-                </NavLink>
-                
-              </li>
-              <li>
-                <button onClick={handleLogout}>Logout</button>
-              </li>
+              {/* <NavLink to="/PatientForm" className="hover:text-blue-300">
+                Patient Form
+              </NavLink> */}
+              <NavLink to="/chatbot" className="hover:text-blue-300">
+                Chatbot
+              </NavLink>
+              <NavLink to="/about" className="hover:text-blue-300">
+                About
+              </NavLink>
+              <NavLink to="/faq" className="hover:text-blue-300">
+                FAQ
+              </NavLink>
+              <button
+                onClick={handleLogout}
+                className="flex items-center hover:text-red-400"
+              >
+                <FaSignOutAlt className="mr-2" /> Logout
+              </button>
             </>
           ) : (
             <>
-            <li>
-              <Link to="/login" className="login-link">
-                Login
+              <Link
+                to="/login"
+                className="flex items-center hover:text-blue-300"
+              >
+                <FaSignInAlt className="mr-2" /> Login
               </Link>
-            </li>
-            <li>
-              <Link to="/signup" className="signup-link">
-                signup
+              <Link
+                to="/signup"
+                className="flex items-center hover:text-blue-300"
+              >
+                Signup
               </Link>
-            </li>
             </>
           )}
-        </ul>
-      </nav>
+        </nav>
+        <button className="md:hidden p-2" aria-label="Menu">
+          <FaBars className="text-2xl" />
+        </button>
+      </div>
     </header>
   );
 };
