@@ -10,6 +10,9 @@
 
 # production
 /build
+# Ignore uploads directory
+/backend/uploads/
+
 
 # misc
 .DS_Store

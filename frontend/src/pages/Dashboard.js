@@ -365,12 +365,12 @@ const Dashboard = () => {
                   {doctorsList.map((doctor) => (
                     <div key={doctor._id} className="flex justify-between items-center mb-2">
                       <span>{doctor.username}</span>
-                      <button
+                      {/* <button
                         onClick={() => handleRemoveStaffId(doctor._id)}
                         className="bg-red-500 text-white px-4 py-2 rounded"
                       >
                         Remove
-                      </button>
+                      </button> */}
                     </div>
                   ))}
                 </div>
@@ -480,7 +480,14 @@ const Dashboard = () => {
                     <p><strong>Gender:</strong> {selectedPatient.gender}</p>
                     <p><strong>Address:</strong> {selectedPatient.address}</p>
                     <p><strong>Contact Number:</strong> {selectedPatient.contactNumber}</p>
+                    {selectedPatient.summary && (
+        <>
+          <h4 className="text-xl font-semibold mt-4">Summary</h4>
+          <p>{selectedPatient.summary}</p>
+        </>
+      )}
                     <h4 className="text-xl font-semibold mt-4">Health Records</h4>
+                    
                     {selectedPatient.healthRecords.length > 0 ? (
                       <ul className="list-disc pl-5">
                         {selectedPatient.healthRecords.map((record) => (

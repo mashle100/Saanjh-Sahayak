@@ -11,7 +11,7 @@ const Doctor = require('../models/Doctor');
 const verifyToken = require("../middleware/verifyToken");
 const roleMiddleware = require('../middleware/roleMiddleware');
 const { generateOtp, verifyOtp } = require('../middleware/otpController.js');
-
+const { exec } = require("child_process");
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -50,49 +50,178 @@ const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 
 // Add a new patient with health records
+const summarizeFiles = (files) => {
+  return new Promise((resolve, reject) => {
+    const summarizerScriptPath = path.join(__dirname, '../summarizer.py');
+    const summarizer = exec(`python ${summarizerScriptPath}`);
+
+    // Prepare input JSON for the Python script
+    const inputJson = JSON.stringify({ healthRecords: files.map(file => ({
+      filename: file.filename,
+      mimetype: file.mimetype,
+    })) });
+
+    summarizer.stdin.write(inputJson);
+    summarizer.stdin.end();
+
+    let rawOutput = '';
+
+    summarizer.stdout.on('data', (data) => {
+      rawOutput += data.toString();
+    });
+
+    summarizer.stderr.on('data', (data) => {
+      reject(`Error executing summarizer script: ${data}`);
+    });
+
+    summarizer.on('close', (code) => {
+      if (code === 0) {
+        try {
+          const parsedOutput = JSON.parse(rawOutput.trim());
+          if (parsedOutput.error) {
+            reject(parsedOutput.error);
+          } else {
+            resolve(parsedOutput.summary);
+          }
+        } catch (e) {
+          reject(`Error parsing summarizer output: ${rawOutput}`);
+        }
+      } else {
+        reject(`Summarizer script exited with code ${code}`);
+      }
+    });
+  });
+};
+
 router.post("/", verifyToken, upload.array('healthRecords'), async (req, res) => {
   try {
     const { name, age, gender, address, contactNumber } = req.body;
     const userId = req.user.id; // Extract user ID from token
 
     // Check if files are uploaded
-    if (!req.files) {
+    if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No files uploaded" });
     }
 
+    // Prepare health records data
+    const healthRecordsData = req.files.map((file) => ({
+      filename: file.filename,
+      path: file.path,
+      mimetype: file.mimetype,
+    }));
+
+    // Summarize health records
+    const summary = await summarizeFiles(req.files);
+
+    // Create and save the new patient record with the summary
     const newPatient = new Patient({
       name,
       age,
       gender,
       address,
       contactNumber,
-      user_id: userId, // Save user ID with the patient record
-      healthRecords: req.files.map((file) => ({
-        filename: file.filename,
-        path: file.path, // Save the path correctly
-        mimetype: file.mimetype,
-      })),
+      user_id: userId,
+      healthRecords: healthRecordsData,
+      summary, // Save the generated summary
     });
 
     const savedPatient = await newPatient.save();
     res.status(201).json(savedPatient);
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message });
   }
 });
-
-// Route to get patients for a specific user
-// router.get('/', verifyToken, async (req, res) => {
+// router.post("/", verifyToken, upload.array('healthRecords'), async (req, res) => {
 //   try {
-//     const userId = req.user.id; // Extract userId from the token payload
-//     const patients = await Patient.find({ user_id: userId }); // Filter patients by user_id
-//     res.json(patients);
+//     const { name, age, gender, address, contactNumber } = req.body;
+//     const userId = req.user.id; // Extract user ID from token
+
+//     // Check if files are uploaded
+//     if (!req.files) {
+//       return res.status(400).json({ error: "No files uploaded" });
+//     }
+
+//     // Prepare the health records data for summarization
+//     const healthRecordsData = req.files.map((file) => ({
+//       filename: file.filename,
+//       path: file.path,
+//       mimetype: file.mimetype,
+//     }));
+
+//     // Call the Python summarizer script
+//     const summarizerScriptPath = path.join(__dirname, "../summarizer.py");
+//     const summarizer = exec(`python ${summarizerScriptPath}`, (error, stdout, stderr) => {
+//       if (error) {
+//         console.error(`Error executing summarizer script: ${error}`);
+//         return res.status(500).json({ error: 'Error generating summary' });
+//       }
+
+//       const summary = stdout.trim(); // Get the summary from script output
+
+//       // Create and save the new patient record with the summary
+//       const newPatient = new Patient({
+//         name,
+//         age,
+//         gender,
+//         address,
+//         contactNumber,
+//         user_id: userId,
+//         healthRecords: healthRecordsData,
+//         summary, // Save the generated summary
+//       });
+
+//       newPatient.save()
+//         .then(savedPatient => res.status(201).json(savedPatient))
+//         .catch(err => {
+//           console.error(`Error saving patient record: ${err}`);
+//           res.status(500).json({ error: err.message });
+//         });
+//     });
+
+//     // Send input JSON to Python script
+//     summarizer.stdin.write(JSON.stringify({ healthRecords: healthRecordsData }));
+//     summarizer.stdin.end();
+
 //   } catch (error) {
-//     console.error('Error fetching patients:', error.message);
-//     res.status(500).json({ msg: 'Server Error' });
+//     console.error(error);
+//     res.status(500).json({ error: error.message });
 //   }
 // });
+// router.post("/", verifyToken, upload.array('healthRecords'), async (req, res) => {
+//   try {
+//     const { name, age, gender, address, contactNumber } = req.body;
+//     const userId = req.user.id; // Extract user ID from token
+
+//     // Check if files are uploaded
+//     if (!req.files) {
+//       return res.status(400).json({ error: "No files uploaded" });
+//     }
+
+//     const newPatient = new Patient({
+//       name,
+//       age,
+//       gender,
+//       address,
+//       contactNumber,
+//       user_id: userId, // Save user ID with the patient record
+//       healthRecords: req.files.map((file) => ({
+//         filename: file.filename,
+//         path: file.path, // Save the path correctly
+//         mimetype: file.mimetype,
+//       })),
+//     });
+
+//     const savedPatient = await newPatient.save();
+//     res.status(201).json(savedPatient);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
+
+
 router.get('/', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id; // Extract userId from the token payload
@@ -177,6 +306,28 @@ router.put('/:id', verifyToken, roleMiddleware(['staff']), async (req, res) => {
 });
 
 // Route to add a file to a patient's record
+// router.post('/:id/files', verifyToken, roleMiddleware(['staff']), upload.single('file'), async (req, res) => {
+//   try {
+//     const patient = await Patient.findById(req.params.id);
+//     if (!patient) {
+//       return res.status(404).json({ msg: 'Patient not found' });
+//     }
+
+//     // Add new file details to patient's healthRecords array
+//     patient.healthRecords.push({
+//       filename: req.file.filename,
+//       path: req.file.path,
+//       mimetype: req.file.mimetype
+//     });
+
+//     await patient.save();
+
+//     res.status(201).json(patient);
+//   } catch (error) {
+//     console.error('Error adding file:', error.message);
+//     res.status(500).json({ msg: 'Server Error' });
+//   }
+// });
 router.post('/:id/files', verifyToken, roleMiddleware(['staff']), upload.single('file'), async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id);
@@ -191,6 +342,14 @@ router.post('/:id/files', verifyToken, roleMiddleware(['staff']), upload.single(
       mimetype: req.file.mimetype
     });
 
+    // Save patient record with new file
+    await patient.save();
+
+    // Summarize all health records
+    const summary = await summarizeFiles(patient.healthRecords);
+
+    // Update patient record with new summary
+    patient.summary = summary; // Update summary field
     await patient.save();
 
     res.status(201).json(patient);
@@ -199,7 +358,6 @@ router.post('/:id/files', verifyToken, roleMiddleware(['staff']), upload.single(
     res.status(500).json({ msg: 'Server Error' });
   }
 });
-
 // Route to delete a patient's record
 router.delete('/:id', verifyToken, roleMiddleware(['staff']), async (req, res) => {
   try {
