@@ -1,20 +1,47 @@
-# Saanjh-Sahayak
+# Saanjh Sahayak
 
 ## Overview
-Saanjh-Sahayak is a project designed to assist users by providing seamless integration between a backend server and a frontend application. The backend is powered by Express, and the frontend is built using React. This README file will guide you through the installation, setup, and usage of the project.
 
-## Table of Contents
-- [Overview](#overview)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Directory Structure](#directory-structure)
-- [Environment Variables](#environment-variables)
-- [Fonts](#fonts)
-- [Contributing](#contributing)
-- [License](#license)
+Saanjh Sahayak is an elderly home management system designed to help staff and doctors efficiently manage patient records. This system allows staff members to add and maintain health records for elderly residents, while doctors can securely access these records for better healthcare management.
 
-## Installation
+## Features
 
+### User Authentication
+
+- Staff and doctors must sign up and log in.
+
+- Secure authentication for data privacy.
+
+### Patient Management
+
+- Staff can add new patients.
+
+- Existing patients’ health records can be updated by staff.
+
+- Staff can view all previous health records of a patient.
+
+### Access Control
+
+- Staff members can grant and revoke doctors' access to patient records.
+
+- Doctors can view patient records but cannot add or modify them.
+
+### Health Record Management
+
+- Staff can add new health records for patients.
+
+- All records are maintained for future reference and analysis.
+
+### Doctor’s Role
+
+- Doctors can access patient records shared by staff.
+
+- Doctors can make clinical decisions based on available records.
+
+## Technology Stack
+React.js, Node.js, Express.js, MongoDB, JWT
+
+Authentication: JWT-based authentication
 ### Backend
 1. **Change directory to backend:**
    ```bash
