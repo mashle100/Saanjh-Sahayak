@@ -4,7 +4,7 @@ const router = express.Router();
 
 // Initialize OpenAI client
 const client = new OpenAI({
-  apiKey: "LL-2HmZUA7c3O3hG8iO8VN45uXxMCpWbu7KftnnozcQFhiGnkRz2SWl5iwj7WdGYOs7",
+  apiKey: "your key",
   baseURL: "https://api.llama-api.com",
 });
 
