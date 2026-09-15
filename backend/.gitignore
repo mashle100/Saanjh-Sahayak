@@ -10,8 +10,9 @@
 
 # production
 /build
-# Ignore uploads directory
-/backend/uploads/
+# Ignore uploads directory (server-side uploaded files)
+uploads/
+uploads/**
 
 
 # misc

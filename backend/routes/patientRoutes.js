@@ -11,7 +11,7 @@ const Doctor = require('../models/Doctor');
 const verifyToken = require("../middleware/verifyToken");
 const roleMiddleware = require('../middleware/roleMiddleware');
 const { generateOtp, verifyOtp } = require('../middleware/otpController.js');
-const { exec } = require("child_process");
+const { exec, spawn } = require("child_process");
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -35,7 +35,9 @@ const fileFilter = (req, file, cb) => {
     "application/pdf",
     "text/plain",
     "application/msword",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    // Add common Office Open XML MIME types
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
   ];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
@@ -53,7 +55,12 @@ const upload = multer({ storage: storage, fileFilter: fileFilter });
 const summarizeFiles = (files) => {
   return new Promise((resolve, reject) => {
     const summarizerScriptPath = path.join(__dirname, '../summarizer.py');
-    const summarizer = exec(`python ${summarizerScriptPath}`);
+    // Use spawn to avoid shell quoting issues with paths that contain spaces
+    const summarizer = spawn('python', [summarizerScriptPath]);
+
+    summarizer.on('error', (err) => {
+      reject(`Error executing summarizer script: ${err.message}`);
+    });
 
     // Prepare input JSON for the Python script
     const inputJson = JSON.stringify({ healthRecords: files.map(file => ({
@@ -71,7 +78,8 @@ const summarizeFiles = (files) => {
     });
 
     summarizer.stderr.on('data', (data) => {
-      reject(`Error executing summarizer script: ${data}`);
+      // Collect stderr but do not immediately reject; we'll handle on close
+      rawOutput += data.toString();
     });
 
     summarizer.on('close', (code) => {
@@ -87,7 +95,8 @@ const summarizeFiles = (files) => {
           reject(`Error parsing summarizer output: ${rawOutput}`);
         }
       } else {
-        reject(`Summarizer script exited with code ${code}`);
+        // If script exited with non-zero code, return stderr or generic message
+        reject(`Summarizer script exited with code ${code}. Output: ${rawOutput}`);
       }
     });
   });
@@ -498,19 +507,19 @@ router.get('/verified', verifyToken, async (req, res) => {
       verifiedStaffIds: userId 
     }).select('userId'); // Fetch only userId field to use in the next step
 
-    console.log('Doctors retrieved:', doctors); // Log the retrieved doctors
+  if (process.env.NODE_ENV !== 'production') console.log('Doctors retrieved:', doctors); // Log the retrieved doctors
     
     // Extract user IDs from doctors
     const doctorUserIds = doctors.map(doctor => doctor.userId);
 
-    console.log('Doctor user IDs:', doctorUserIds); // Log the extracted user IDs
+  if (process.env.NODE_ENV !== 'production') console.log('Doctor user IDs:', doctorUserIds); // Log the extracted user IDs
 
     // Step 2: Fetch user details for the IDs retrieved
     const users = await User.find({
       _id: { $in: doctorUserIds }
     }).select('username'); // Fetch only username field
 
-    console.log('Users retrieved:', users); // Log the retrieved users
+  if (process.env.NODE_ENV !== 'production') console.log('Users retrieved:', users); // Log the retrieved users
 
     // Format the response to include user IDs and usernames
     const doctorDetails = doctors.map(doctor => {
@@ -521,7 +530,7 @@ router.get('/verified', verifyToken, async (req, res) => {
       };
     });
 
-    console.log('Formatted doctor details:', doctorDetails); // Log the formatted doctor details
+  if (process.env.NODE_ENV !== 'production') console.log('Formatted doctor details:', doctorDetails); // Log the formatted doctor details
 
     // Send the doctors list with usernames as a JSON response
     res.json(doctorDetails);
@@ -548,15 +557,15 @@ router.post('/remove-staff', verifyToken, async (req, res) => {
     
     
     const userId = user._id;
-    console.log('User ID retrieved:', userId); // Log the retrieved user ID
+  if (process.env.NODE_ENV !== 'production') console.log('User ID retrieved:', userId); // Log the retrieved user ID
 
     // Step 2: Find the doctor and check if userId is in the verifiedStaffIds
     const doctor = await Doctor.findOne({ _id: doctorId });
     
    
 
-    console.log('Doctor details:', doctor); // Log the doctor document
-    console.log('Doctor verifiedStaffIds:', doctor.verifiedStaffIds); // Log the verifiedStaffIds
+  if (process.env.NODE_ENV !== 'production') console.log('Doctor details:', doctor); // Log the doctor document
+  if (process.env.NODE_ENV !== 'production') console.log('Doctor verifiedStaffIds:', doctor.verifiedStaffIds); // Log the verifiedStaffIds
 
 
     // Step 3: Remove the staffId from the specified doctor
@@ -565,7 +574,7 @@ router.post('/remove-staff', verifyToken, async (req, res) => {
       { $pull: { verifiedStaffIds: userId } } // Remove the staffId
     );
 
-    console.log('Update result:', result); // Log the result of the update operation
+  if (process.env.NODE_ENV !== 'production') console.log('Update result:', result); // Log the result of the update operation
 
     // Check if any documents were modified
     if (result.modifiedCount === 0) {
