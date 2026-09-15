@@ -1,3 +1,67 @@
+# Saanjh-Sahayak
+
+Local setup and run instructions
+
+Prerequisites
+- Node.js (tested on v20.x)
+- npm
+- MongoDB running locally or remote, reachable via `MONGODB_URI`
+- Python (for the simple `summarizer.py` used by the backend)
+
+Quick start
+
+1. Clone the repo:
+
+```bash
+git clone https://github.com/mashle100/Saanjh-Sahayak.git
+cd Saanjh-Sahayak
+```
+
+2. Create environment files
+
+Copy the example env file for the backend and fill values:
+
+```bash
+cp backend/.env.example backend/.env
+# Edit backend/.env and set MONGODB_URI, JWT_SECRET, OPENAI_API_KEY (if used)
+```
+
+3. Install dependencies
+
+Backend:
+```bash
+cd backend
+npm install
+```
+
+Frontend:
+```bash
+cd ../frontend
+npm install
+```
+
+4. Run the app
+
+Start backend (nodemon recommended for development):
+```bash
+cd backend
+npm run dev
+```
+
+Start frontend:
+```bash
+cd frontend
+npm start
+# or `npm run dev` (alias to start)
+```
+
+Notes & troubleshooting
+- If ports 3000 or 5000 are in use, either stop the processes or set `PORT` environment variable before starting.
+- Backend uses a simple Python script `backend/summarizer.py`. Ensure `python` is on PATH. If Python isn't available, the backend will still run but file summarization will fail.
+- Do not commit secrets. `backend/.env` is ignored; use `backend/.env.example` to share required keys.
+
+Contributing
+- Open issues or PRs for bugs and improvements.
 # Saanjh Sahayak
 
 ## Overview

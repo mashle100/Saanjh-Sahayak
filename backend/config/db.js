@@ -10,7 +10,7 @@ const connectDB = async () => {
       useCreateIndex: true,
     });
 
-    console.log("MongoDB Connected...");
+  if (process.env.NODE_ENV !== 'production') console.log("MongoDB Connected...");
   } catch (err) {
     console.error(err.message);
     process.exit(1);

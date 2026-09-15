@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "../services/axios";
 
 const Chatbot = () => {
   const [inputText, setInputText] = useState("");
@@ -20,7 +20,8 @@ const Chatbot = () => {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/chat", {
+      // Create chat record in backend (mounted at /api/chat)
+      const res = await axios.post('/chat', {
         userMessage: inputText,
       });
       const chatId = res.data._id;
@@ -31,9 +32,10 @@ const Chatbot = () => {
           content: msg.text,
         })),
       };
-      const botRes = await axios.post("http://localhost:5000/ask", requestBody);
+      // /ask is mounted at the server root (not under /api)
+      const botRes = await axios.post('http://localhost:5000/ask', requestBody);
       const botMessageText = botRes.data.answer;
-      await axios.put(`http://localhost:5000/api/chat/${chatId}`, {
+      await axios.put(`/chat/${chatId}`, {
         botMessage: botMessageText,
       });
       const botMessage = { text: botMessageText, sender: "bot" };

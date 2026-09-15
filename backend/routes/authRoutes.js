@@ -60,7 +60,7 @@ router.post(
       const payload = { user: { id: newUser.id, role: newUser.role } };
       jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
         if (err) {
-          console.log('JWT Signing Error:', err);
+          console.error('JWT Signing Error:', err);
           return res.status(500).json({ msg: 'Token generation failed' });
         }
         res.status(201).json({ token, msg: 'User registered successfully' });
@@ -71,7 +71,7 @@ router.post(
       try {
         if (!fs.existsSync(userDir)) {
           fs.mkdirSync(userDir, { recursive: true });
-          console.log('Directory created:', userDir);
+          if (process.env.NODE_ENV !== 'production') console.log('Directory created:', userDir);
         }
       } catch (err) {
         console.error('Error creating directory:', err);

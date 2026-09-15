@@ -30,7 +30,6 @@ const verifyToken = (req, res, next) => {
   const token = req.headers['x-auth-token'] || req.headers.authorization?.split(' ')[1];
   
   if (!token) {
-    console.log('No token, authorization denied');
     return res.status(401).json({ msg: 'No token, authorization denied' });
   }
 

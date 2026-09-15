@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '../services/axios';
 import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -30,7 +30,7 @@ const Dashboard = () => {
   const fetchPatients = async () => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get('http://localhost:5000/api/patients', {
+      const response = await axios.get('/patients', {
         headers: { 'x-auth-token': token }
       });
       setPatients(response.data);
@@ -42,7 +42,7 @@ const Dashboard = () => {
   const fetchPatientsForStaff = async (staffId) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get('http://localhost:5000/api/patients/patients', {
+      const response = await axios.get('/patients/patients', {
         headers: { 'x-auth-token': token },
         params: { user_id: staffId }
       });
@@ -55,7 +55,7 @@ const Dashboard = () => {
   const fetchDoctorsList = async () => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get('http://localhost:5000/api/patients/verified', {
+      const response = await axios.get('/patients/verified', {
         headers: { 'x-auth-token': token }
       });
       setDoctorsList(response.data);
@@ -67,7 +67,7 @@ const Dashboard = () => {
   const handleRemoveStaffId = async (doctorId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post('http://localhost:5000/api/patients/remove-staff', { staffId: userId }, {
+      await axios.post('/patients/remove-staff', { staffId: userId }, {
         headers: { 'x-auth-token': token }
       });
       fetchDoctorsList();
@@ -83,7 +83,7 @@ const Dashboard = () => {
       const token = localStorage.getItem('token');
       console.log('Current userId before OTP generation:', userId); // Debugging
 
-      const response = await axios.post('http://localhost:5000/api/patients/generate-otp', { userId }, {
+      const response = await axios.post('/patients/generate-otp', { userId }, {
         headers: { 'x-auth-token': token }
       });
 
@@ -104,7 +104,7 @@ const Dashboard = () => {
       }
 
       const token = localStorage.getItem('token');
-      const response = await axios.post('http://localhost:5000/api/patients/verify-otp', {
+      const response = await axios.post('/patients/verify-otp', {
         otp: otpValue,
         userId: staffUserId
       }, {
@@ -124,7 +124,7 @@ const Dashboard = () => {
   const fetchVerifiedStaffList = async () => {
     const token = localStorage.getItem('token');
     try {
-      const response = await axios.get('http://localhost:5000/api/patients/verified-staff', {
+      const response = await axios.get('/patients/verified-staff', {
         headers: { 'x-auth-token': token }
       });
       setVerifiedStaffList(response.data);
@@ -197,7 +197,7 @@ const Dashboard = () => {
   const handleSaveChanges = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`http://localhost:5000/api/patients/${selectedPatient._id}`, patientForm, {
+      const response = await axios.put(`/patients/${selectedPatient._id}`, patientForm, {
         headers: {
           "x-auth-token": token
         }
@@ -218,10 +218,10 @@ const Dashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`http://localhost:5000/api/patients/${selectedPatient._id}/files`, formData, {
+      // Let the browser set Content-Type (including boundary) for FormData
+      await axios.post(`/patients/${selectedPatient._id}/files`, formData, {
         headers: {
-          'x-auth-token': token,
-          'Content-Type': 'multipart/form-data'
+          'x-auth-token': token
         }
       });
       setNewFile(null);
@@ -237,7 +237,7 @@ const Dashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/patients/${selectedPatient._id}/files/${filename}`, {
+      await axios.delete(`/patients/${selectedPatient._id}/files/${filename}`, {
         headers: {
           'x-auth-token': token
         }
@@ -254,7 +254,7 @@ const Dashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/patients/${selectedPatient._id}`, {
+      await axios.delete(`/patients/${selectedPatient._id}`, {
         headers: {
           'x-auth-token': token
         }

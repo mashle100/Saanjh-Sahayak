@@ -3,15 +3,21 @@ import axios from 'axios';
 
 const instance = axios.create({
   baseURL: 'http://localhost:5000/api/',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Do not set a global Content-Type so FormData requests can set their own boundary header
+  headers: {},
 });
 
 instance.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers['x-auth-token'] = token;
+
+      // If the request data is FormData, remove any Content-Type so the browser adds the correct
+      // multipart/form-data; boundary=... header automatically. This prevents 400 Bad Request from
+      // servers that require the boundary value.
+      if (config.data && typeof FormData !== 'undefined' && config.data instanceof FormData) {
+        if (config.headers['Content-Type']) delete config.headers['Content-Type'];
+      }
   }
   return config;
 }, error => {
@@ -27,7 +33,8 @@ instance.interceptors.response.use(response => response, async error => {
 
     if (refreshToken) {
       try {
-        const response = await axios.post('http://localhost:5000/api/refresh', { refreshToken });
+        // Refresh token endpoint lives under /api/auth/refresh on the backend
+        const response = await axios.post('http://localhost:5000/api/auth/refresh', { refreshToken });
         const newAccessToken = response.data.accessToken;
 
         localStorage.setItem('token', newAccessToken);

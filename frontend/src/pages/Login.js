@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "../services/axios";
 import { useNavigate } from "react-router-dom";
 
 const Login = ({ setIsAuthenticated }) => {
@@ -23,10 +23,7 @@ const Login = ({ setIsAuthenticated }) => {
     setIsLoading(true); // Set loading to true
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        user
-      );
+      const response = await axios.post('/auth/login', user);
       const responseData = response.data;
       if (responseData && responseData.token) {
         localStorage.setItem("token", responseData.token);

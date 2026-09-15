@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axios from "../services/axios";
 import { useNavigate } from "react-router-dom";
 
 const PatientForm = () => {
@@ -38,6 +38,18 @@ const PatientForm = () => {
       return;
     }
 
+    // Client-side preflight validation
+    if (!patient.name || !patient.age || !patient.gender || !patient.address || !patient.contactNumber) {
+      setError('Please fill all required fields before submitting.');
+      return;
+    }
+
+    // Ensure at least one file is attached
+    if (!patient.healthRecords || patient.healthRecords.length === 0) {
+      setError('Please attach at least one health record file.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", patient.name);
     formData.append("age", patient.age);
@@ -50,30 +62,40 @@ const PatientForm = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/patients", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          "x-auth-token": token,
-        },
-      });
+      // Debug: log number of files selected and FormData entries
+      try {
+        console.log('Number of files selected:', patient.healthRecords.length);
+        for (const pair of formData.entries()) {
+          if (pair[1] instanceof File) {
+            console.log(`FormData entry: ${pair[0]} -> File name=${pair[1].name}, type=${pair[1].type}, size=${pair[1].size}`);
+          } else {
+            console.log(`FormData entry: ${pair[0]} -> ${pair[1]}`);
+          }
+        }
+      } catch (fdErr) {
+        console.warn('Could not iterate FormData entries:', fdErr);
+      }
+
+      // Let the browser set the Content-Type (including boundary) for FormData uploads.
+      const resp = await axios.post('/patients', formData);
+      console.log('Upload response:', resp.status, resp.data);
       alert("Patient added successfully");
       navigate("/dashboard");
     } catch (error) {
+      console.error('Upload error:', error);
+      if (error.response) {
+        console.error('Server response:', error.response.status, error.response.data);
+        // Surface server message when available
+        setError(error.response.data.msg || JSON.stringify(error.response.data) || 'Server Error');
+      }
+
       if (error.response && error.response.status === 401) {
         try {
           const refreshToken = localStorage.getItem("refreshToken");
-          const response = await axios.post(
-            "http://localhost:5000/api/auth/refresh",
-            { refreshToken }
-          );
+          // Use the configured axios instance to call the refresh endpoint under /api/auth/refresh
+          const response = await axios.post('/auth/refresh', { refreshToken });
           localStorage.setItem("token", response.data.accessToken);
-
-          await axios.post("http://localhost:5000/api/patients", formData, {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              "x-auth-token": response.data.accessToken,
-            },
-          });
+          await axios.post('/patients', formData);
           alert("Patient added successfully");
           navigate("/dashboard");
         } catch (refreshError) {
@@ -82,7 +104,8 @@ const PatientForm = () => {
           localStorage.removeItem("refreshToken");
         }
       } else {
-        setError("Error adding patient");
+        // If we didn't already set a detailed error, show a generic one
+        if (!error.response) setError("Error adding patient");
       }
     }
   };

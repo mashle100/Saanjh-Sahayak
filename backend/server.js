@@ -24,7 +24,9 @@ mongoose.connect(mongoURI, {
 
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error:"));
-db.once("open", () => console.log("MongoDB Connected..."));
+db.once("open", () => {
+  if (process.env.NODE_ENV !== 'production') console.log("MongoDB Connected...");
+});
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -92,5 +94,7 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log('Server started on port ${PORT}'));
+app.listen(PORT, () => {
+  if (process.env.NODE_ENV !== 'production') console.log(`Server started on port ${PORT}`);
+});
 
